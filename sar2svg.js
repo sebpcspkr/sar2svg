@@ -9,26 +9,27 @@ var util = require('util');
 var spawn = require('child_process').spawn;
 var os = require('os');
 var url = require('url');
-var colors = [ '#FF00BF', '#FF0000', '#FFBF00', '#80FF00', '#00FF40', '#00FFFF', '#0040FF', '#7F00FF', '#FF00BF', '#FF0000', '#440044', '#004400', '#000044', '#004444' ];
+var colors = [ '#ff00bf', '#0040ff', '#ffbf00', '#80ff00',  '#ff0000', '#00fff', '#7f00ff', '#00ff40', '#ff00bf', '#ff0000', '#440084', '#008400', '#000044', '#004444' ];
 
 
-function drawBackgroung(SVGId, width, height) {
+function drawBackgroung(SVGId, width, height, minY) {
     var ii, SVGChunk = '';
+    if (!minY) { minY = 0; }
  
     SVGChunk += '<polyline vector-effect="non-scaling-stroke" points="0,0 0,' + height + ' ' + width + ',' + height + ' ' + width + ',0 0,0" fill="#eeeeee" fill-opacity="0.6" />';
     SVGChunk += '<polyline id="axis' + SVGId + '" vector-effect="non-scaling-stroke" style="fill:none;stroke:#000000" points="0,0 0,' + height + ' ' + width + ',' + height + '"/>';
 
-    for (ii = 1; ii < 3; ii++) {
-        SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.4" style="fill:none;stroke:#888888" points="0,' + (height - (ii * height / 2)) + ' ' + width + ',' + (height - (ii * height / 2)) + '"/>';
+    if (minY === 0) {
+        for (ii = 1; ii < 3; ii++) {
+            SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.4" style="fill:none;stroke:#888888" points="0,' + (height - (ii * height / 2)) + ' ' + width + ',' + (height - (ii * height / 2)) + '"/>';
+        }
     }
-
-    
 
     return SVGChunk;
 }
 
 function endDrawGraph(SVGId, width, height, yCounter, graphHeader, fullGraphs) {
-    var ii, SVGChunk = '', localMax = 0, localMin = 1000000, theHeader, timeValue;
+    var ii, SVGChunk = '', localMax = -Infinity, localMin = Infinity, theHeader, timeValue, yFactor = 1;
     
     theHeader = graphHeader.split(/;/);
     theHeader.shift();
@@ -45,7 +46,7 @@ function endDrawGraph(SVGId, width, height, yCounter, graphHeader, fullGraphs) {
         if (parseInt(fullGraphs[2][ii], 10) > localMax) {
             localMax = parseInt(fullGraphs[2][ii], 10);
         }
-        if (parseInt(fullGraphs[4][ii], 10) > localMin) {
+        if (parseInt(fullGraphs[4][ii], 10) < localMin) {
             localMin = parseInt(fullGraphs[4][ii], 10);
         }
     }
@@ -53,9 +54,18 @@ function endDrawGraph(SVGId, width, height, yCounter, graphHeader, fullGraphs) {
         localMax = 1;
     }
     
+    yFactor = (-(height / localMax));
+    if (localMin < 0) {
+        yFactor = (-(height / (localMax - localMin)));
+    }
     SVGChunk += '\n<g id="g' + SVGId + '" transform="translate(10,' + yCounter + ')">';
-    SVGChunk += '\n<g id="gf' + SVGId + '" transform="scale(' + (width / (24 * 3600)) + ',' + (-(height / localMax)) + ')" >\n';
+    SVGChunk += '\n<g id="gf' + SVGId + '" transform="scale(' + (width / (24 * 3600)) + ',' + yFactor + ')" >\n';
     SVGChunk += drawBackgroung(SVGId, width * 100, -localMax);
+    if (localMin < 0) {
+        SVGChunk += drawBackgroung(SVGId, width * 100, -localMax + localMin, localMin);
+    } else {
+        SVGChunk += drawBackgroung(SVGId, width * 100, -localMax);
+    }
     for (ii = 0; ii < fullGraphs[0].length; ii++) {
         theHeader = fullGraphs[0][ii];
 
@@ -72,13 +82,21 @@ function endDrawGraph(SVGId, width, height, yCounter, graphHeader, fullGraphs) {
         SVGChunk +=  fullGraphs[0][ii] + ' (Min:' + fullGraphs[4][ii] + '/Max:' + fullGraphs[2][ii] + ')</text>';
     }
     
-    for (ii = 1; ii < 8; ii++) {
-        timeValue = parseInt(24 * ii / 7, 10) + ':00:00';
-        SVGChunk += '<text text-anchor="middle" y="' + (height + 20) + '" x="' + parseInt((ii * width) / 7, 10) + '"  fill="#000000">' + timeValue + '</text>';
-        SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.5" style="fill:none;stroke:#000000" points="' + parseInt((ii * width) / 7, 10) + ',' + height + ' ' + parseInt((ii * width) / 7, 10) + ',' + (height - 20) + '"/>';
+    for (ii = 1; ii <= 8; ii++) {
+        timeValue = parseInt(24 * ii / 8, 10) + ':00';
+        SVGChunk += '<text text-anchor="middle" y="' + (height + 20) + '" x="' + parseInt((ii * width) / 8, 10) + '"  fill="#000000">' + timeValue + '</text>';
+        SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.5" style="fill:none;stroke:#000000" points="' + parseInt((ii * width) / 8, 10) + ',' + height + ' ' + parseInt((ii * width) / 8, 10) + ',' + (height - 20) + '"/>';
+    }
+    for (ii = 1; ii < 24; ii++) {
+        SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.5" style="fill:none;stroke:#000000" points="' + parseInt((ii * width) / 24, 10) + ',' + height + ' ' + parseInt((ii * width) / 24, 10) + ',' + (height - 10) + '"/>';
     }
     SVGChunk += '\n<text text-anchor="start" x="10" y="20" fill="#000000">' +  localMax + '</text>';
-    SVGChunk += '\n<text text-anchor="middle" x="8" y="' + (height + 20) + '" fill="#000000">0</text>';
+    if (localMin < 0) {
+        SVGChunk += '\n<text text-anchor="middle" x="8" y="' + (height * (localMax / (localMax - localMin)) + 20) + '" fill="#000000">0</text>';
+    } else {
+        SVGChunk += '\n<text text-anchor="middle" x="8" y="' + (height + 20) + '" fill="#000000">0</text>';
+    }
+    
     SVGChunk += '\n<text text-anchor="middle" x="' + width / 2 + '" y="' + (height + 40) + '" fill="#000000">' + graphHeader + '</text>';
     
         
@@ -126,7 +144,7 @@ function globalCall(lines, width, height) {
             for (j in headerA) {
 
                 globalData[header][1][j] = '';//polyline
-                globalData[header][2][j] = 0;//max
+                globalData[header][2][j] = -1000000;//max
                 globalData[header][3][j] = 0;//time+
                 globalData[header][4][j] = 1000000;//min
                 
@@ -184,9 +202,13 @@ function workAgain(input) {
         line = preOutput.shift();
         if (line.match(/^#/)) {
             header = line;
-            temp[header] = [];
+            if (!temp[header]) {
+                temp[header] = [];
+            }
         }
-        temp[header].push(line);
+        if (!line.match(/LINUX-RESTART/)) {
+            temp[header].push(line);
+        }
         i++;
     }
     
