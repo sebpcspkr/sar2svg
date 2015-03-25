@@ -142,7 +142,6 @@ function globalCall(lines, width, height) {
             globalData[header][4] = [];
             
             for (j in headerA) {
-
                 globalData[header][1][j] = '';//polyline
                 globalData[header][2][j] = -1000000;//max
                 globalData[header][3][j] = 0;//time+
@@ -153,11 +152,21 @@ function globalCall(lines, width, height) {
         } else if (dataLine) {
             workingData = dataLine.split(/;/);
            
+            //maybe collect hasn't started at 00:00
+            // timestamp :2015-03-14 15:22:01 UTC
+            if (globalData[header][3][2] === 0) {
+                    var ts1 = workingData[2].split(/\s/);
+                    var ts2 = ts1[1].split(/:/);
+                    for (ii = 3; ii < workingData.length; ii++) {
+                        globalData[header][3][ii - 3] = parseInt(ts2[0], 10) * 60 * 60 + parseInt(ts2[1], 10) * 60 + parseInt(ts2[2], 10);
+                    }
+            }
                 
             for (ii = 3; ii < workingData.length; ii++) {
 
                 
                 theData = workingData[ii];
+                
                 
                 
                 globalData[header][3][ii - 3] += parseInt(workingData[1], 10);
