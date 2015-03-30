@@ -12,9 +12,17 @@ First, you'll need on the host you want to view :
   * the sysstat package
   * the sadc module of sysstat with ENABLED=true
   * the nodejs package
+
 Then (the script has no dependency on fancy any npm, it only uses modules from the base nodejs distribution) :
   * Just run the script with your nodejs or io.js
 
+Install and run example (on Debian)
+```
+  apt-get install sysstat nodejs
+  sed -i  s/^ENABLED=\"false\"/ENABLED=\"true\"/g /etc/default/sysstat
+  nodejs sar2svg.js &
+``` 
+If you haven't already installed and configured sysstat, you'll have to wait for the first collects (around 10 minutes).
 Usage
 =============================
 Let assume your host IP is 10.10.10.10.
