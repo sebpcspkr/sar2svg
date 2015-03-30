@@ -4,7 +4,7 @@ Service to convert sar data into svg data viewable into web browser
 
 This is a service tool to convert sar data (From System performance tools for the Linux operating system, see https://github.com/sysstat/sysstat) into SVG format viewable into web browser.
 
-It is written in NodeJS.
+It is written in Javascript. It runs server-side (with NodeJS or io.js).
 
 Install
 ==========================
@@ -25,27 +25,27 @@ Install and run example (on Debian)
 If you haven't already installed and configured sysstat, you'll have to wait for the first collects (around 10 minutes).
 Usage
 =============================
-Let assume your host IP is 10.10.10.10.
+Let assume your host IP is 127.0.0.1.
 You can view via web browser : 
 ```
   * the graphs for "sar -A" of the current day 
 ``` 
-http://10.10.10.10:1337/
+http://127.0.0.1:1337/
 
 ```
   * the graphs for "sar -w" of the current day
 ```
-  http://10.10.10.10:1337/?arg=-w
+  http://127.0.0.1:1337/?arg=-w
   
 ```
   * the graphs for "sar -wu" of the current day 
 ```  
-  http://10.10.10.10:1337/?arg=-wu
+  http://127.0.0.1:1337/?arg=-wu
 
 ```
   * the graphs for "sar -wu" of the file of yesterday (e.g. /var/log/sysstat/sa18) 
 ```
-  http://10.10.10.10:1337/?arg=-wu&file=/var/log/sysstat/sa18
+  http://127.0.0.1:1337/?arg=-wu&file=/var/log/sysstat/sa18
 
 ```
   * ...
@@ -56,6 +56,7 @@ Then, you can think of keeping some interesting parts of graphs and edit them in
 
 Notes, warnings:
 ==========================
-This service is not perfect, nor the code. Try it before deciding to use it.
+  * This service is not perfect, nor the code. Try it before deciding to use it.
+  * When you open your svg file into Inkscape, consider selecting all and putting your stroke style width to 1 px.
 
 
