@@ -16,12 +16,12 @@ function drawBackgroung(SVGId, width, height, minY) {
     var ii, SVGChunk = '';
     if (!minY) { minY = 0; }
  
-    SVGChunk += '<polyline vector-effect="non-scaling-stroke" points="0,0 0,' + height + ' ' + width + ',' + height + ' ' + width + ',0 0,0" fill="#eeeeee" fill-opacity="0.6" />';
-    SVGChunk += '<polyline id="axis' + SVGId + '" vector-effect="non-scaling-stroke" style="fill:none;stroke:#000000" points="0,0 0,' + height + ' ' + width + ',' + height + '"/>';
+    SVGChunk += '<polyline vector-effect="non-scaling-stroke" points="0,0 0,' + height + ' ' + 2 * width + ',' + height + ' ' + 2 * width + ',0 0,0" fill="#eeeeee" fill-opacity="0.6" />';
+    SVGChunk += '<polyline id="axis' + SVGId + '" vector-effect="non-scaling-stroke" style="fill:none;stroke:#000000" points="0,0 0,' + height + ' ' + 2 * width + ',' + height + '"/>';
 
     if (minY === 0) {
         for (ii = 1; ii < 3; ii++) {
-            SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.4" style="fill:none;stroke:#888888" points="0,' + (height - (ii * height / 2)) + ' ' + width + ',' + (height - (ii * height / 2)) + '"/>';
+            SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.4" style="fill:none;stroke:#888888" points="0,' + (height - (ii * height / 2)) + ' ' + 2 * width + ',' + (height - (ii * height / 2)) + '"/>';
         }
     }
 
@@ -76,18 +76,25 @@ function endDrawGraph(SVGId, width, height, yCounter, graphHeader, fullGraphs) {
         
     }
     SVGChunk += '\n</g>\n';
+    var headerX = 20, headerY = 0, headerTxt = '';
     for (ii = 0; ii < fullGraphs[0].length; ii++) {
         theHeader = fullGraphs[0][ii];
-        SVGChunk +=  '\n<text text-anchor="end" x="' + width  + '" y="' + 20 * (ii + 1) + '" fill="' + colors[ii] + '">';
-        SVGChunk +=  fullGraphs[0][ii] + ' (Min:' + fullGraphs[4][ii] + '/Max:' + fullGraphs[2][ii] + ')</text>';
+        headerTxt = fullGraphs[0][ii] + ' (Min:' + fullGraphs[4][ii] + '/Max:' + fullGraphs[2][ii] + ')';
+        SVGChunk +=  '\n<text text-anchor="start" x="' + headerX    + '" y="' + (height + 40 + headerY)  + '" fill="' + colors[ii] + '">';
+        SVGChunk +=  headerTxt + '</text>';
+        headerX += headerTxt.length * 10;
+        if (headerX > width) {
+            headerX = 0;
+            headerY += 16;
+        }
     }
     
-    for (ii = 1; ii <= 8; ii++) {
-        timeValue = parseInt(24 * ii / 8, 10) + ':00';
+    for (ii = 1; ii <= 8 * 2; ii++) {
+        timeValue = parseInt((24 * ii / 8) % 24, 10) + ':00';
         SVGChunk += '<text text-anchor="middle" y="' + (height + 20) + '" x="' + parseInt((ii * width) / 8, 10) + '"  fill="#000000">' + timeValue + '</text>';
         SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.5" style="fill:none;stroke:#000000" points="' + parseInt((ii * width) / 8, 10) + ',' + height + ' ' + parseInt((ii * width) / 8, 10) + ',' + (height - 20) + '"/>';
     }
-    for (ii = 1; ii < 24; ii++) {
+    for (ii = 1; ii < 24 * 2; ii++) {
         SVGChunk += '<polyline  vector-effect="non-scaling-stroke" stroke-opacity="0.5" style="fill:none;stroke:#000000" points="' + parseInt((ii * width) / 24, 10) + ',' + height + ' ' + parseInt((ii * width) / 24, 10) + ',' + (height - 10) + '"/>';
     }
     SVGChunk += '\n<text text-anchor="start" x="10" y="20" fill="#000000">' +  localMax + '</text>';
@@ -97,161 +104,172 @@ function endDrawGraph(SVGId, width, height, yCounter, graphHeader, fullGraphs) {
         SVGChunk += '\n<text text-anchor="middle" x="8" y="' + (height + 20) + '" fill="#000000">0</text>';
     }
     
-    SVGChunk += '\n<text text-anchor="middle" x="' + width / 2 + '" y="' + (height + 40) + '" fill="#000000">' + graphHeader + '</text>';
-    
+    SVGChunk += '\n<text text-anchor="middle" x="' + width  + '" y="0" fill="#888888">' + graphHeader + '</text>';
+
         
     SVGChunk += ' \n</g>';
     return SVGChunk;
 }
 function globalCall(lines, width, height) {
     var ts, i = 0, j, k, l, ii, header = '', prevHeader = '', percentCol, relativeCol, globalData, workingData, theData, SVGBody, SVGId,  exHeader, headerA, theHeader, yCounter, dataLine, headerLine, anoLine, dataArray, SVGHeader;
-    SVGId = 0;
+    if (lines === 'Empty data!') {
+        SVGBody = 'Empty data : try again with data or wait for data or check your args';
+    } else {
     
-    dataArray = [];
-    exHeader = '';
-    headerA = [];
+        SVGId = 0;
 
-    globalData = [];
-    SVGBody = '<g><text text-anchor="middle" x="' + width / 2  + '" y="30">Hostname : ' + os.hostname() + ' ( ' + os.type() + ' / ' + os.arch() + ' / ' + os.release() + ')</text></g>';
-    yCounter = 60;
+        dataArray = [];
+        exHeader = '';
+        headerA = [];
 
-    while (i < lines.length) {
-        dataLine = lines[i];
-        if (dataLine.match(/^# /)) {
-            //headers
-            header = dataLine;
+        globalData = [];
+        SVGBody = '<g><text text-anchor="middle" x="' + width / 2  + '" y="30">Hostname : ' + os.hostname() + ' ( ' + os.type() + ' / ' + os.arch() + ' / ' + os.release() + ')</text></g>';
+        yCounter = 60;
 
-            globalData[header] = [];
-            if (prevHeader !== header) {
-                if (prevHeader !== '') {
-                    SVGBody += endDrawGraph(SVGId, width, height, yCounter, prevHeader, globalData[prevHeader]);
-                    yCounter += height + 60;
-                    SVGId++;
+        while (i < lines.length) {
+            dataLine = lines[i];
+            if (dataLine.match(/^# /)) {
+                //headers
+                header = dataLine;
+
+                globalData[header] = [];
+                if (prevHeader !== header) {
+                    if (prevHeader !== '') {
+                        SVGBody += endDrawGraph(SVGId, width, height, yCounter, prevHeader, globalData[prevHeader]);
+                        yCounter += height + 120;
+                        SVGId++;
+                    }
+
+
+                    prevHeader = header;
                 }
-                
-                
-                prevHeader = header;
-            }
 
-            //relative or percent
-            headerA = header.split(/;/);
-            globalData[header][0] = header.split(/;/);
-            globalData[header][1] = [];
-            globalData[header][2] = [];
-            globalData[header][3] = [];
-            globalData[header][4] = [];
-            
-            for (j in headerA) {
-                globalData[header][1][j] = '';//polyline
-                globalData[header][2][j] = -1000000;//max
-                globalData[header][3][j] = 0;//time+
-                globalData[header][4][j] = 1000000;//min
-                
-            }
-      
-        } else if (dataLine) {
-            workingData = dataLine.split(/;/);
-           
-            //maybe collect hasn't started at 00:00
-            // timestamp :2015-03-14 15:22:01 UTC
-            if (globalData[header][3][2] === 0) {
+                //relative or percent
+                headerA = header.split(/;/);
+                globalData[header][0] = header.split(/;/);
+                globalData[header][1] = [];
+                globalData[header][2] = [];
+                globalData[header][3] = [];
+                globalData[header][4] = [];
+
+                for (j in headerA) {
+                    globalData[header][1][j] = '';//polyline
+                    globalData[header][2][j] = -1000000;//max
+                    globalData[header][3][j] = -1;//time+ // -1 instead of 0 is a trick
+                    globalData[header][4][j] = 1000000;//min
+
+                }
+
+            } else if (dataLine) {
+                workingData = dataLine.split(/;/);
+
+                //maybe collect hasn't started at 00:00
+                // timestamp :2015-03-14 15:22:01 UTC
+                if (globalData[header][3][2] === -1) {
+                    globalData[header][3][2] = 0; //here's the trick
                     var ts1 = workingData[2].split(/\s/);
                     var ts2 = ts1[1].split(/:/);
                     for (ii = 3; ii < workingData.length; ii++) {
                         globalData[header][3][ii - 3] = parseInt(ts2[0], 10) * 60 * 60 + parseInt(ts2[1], 10) * 60 + parseInt(ts2[2], 10);
                     }
-            }
-                
-            for (ii = 3; ii < workingData.length; ii++) {
-
-                
-                theData = workingData[ii];
-                
-                
-                
-                globalData[header][3][ii - 3] += parseInt(workingData[1], 10);
-                globalData[header][1][ii - 3] += ' ' + parseInt(globalData[header][3][ii - 3], 10) + ',' + theData;
-                if (theData > parseInt(globalData[header][2][ii - 3], 10)) {
-                    globalData[header][2][ii - 3] = theData;
                 }
-                if (theData < parseInt(globalData[header][4][ii - 3], 10)) {
-                    globalData[header][4][ii - 3] = theData;
-                }
-                
 
+                for (ii = 3; ii < workingData.length; ii++) {
+
+
+                    theData = workingData[ii];
+
+
+
+                    globalData[header][3][ii - 3] += parseInt(workingData[1], 10);
+                    globalData[header][1][ii - 3] += ' ' + parseInt(globalData[header][3][ii - 3], 10) + ',' + theData;
+                    if (theData > parseInt(globalData[header][2][ii - 3], 10)) {
+                        globalData[header][2][ii - 3] = theData;
+                    }
+                    if (theData < parseInt(globalData[header][4][ii - 3], 10)) {
+                        globalData[header][4][ii - 3] = theData;
+                    }
+
+
+                }
             }
+            i++;
         }
-        i++;
+
+        //Last graph
+        SVGBody += endDrawGraph(SVGId, width, height, yCounter, prevHeader, globalData[prevHeader]);
+
+
+        SVGHeader = '<?xml version="1.0"?>\n';
+        SVGHeader += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ';
+        SVGHeader += '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n';
+        SVGHeader += '<svg xmlns="http://www.w3.org/2000/svg" ';
+        SVGHeader += 'width="' + (2 * width + 20) + '" height="' + (yCounter + height + 60) + '"  viewPort="0 0 ' + width + ' ' + height + '">\n';
+        SVGBody =  SVGHeader + SVGBody + '\n</svg>';
     }
-    
-    //Last graph
-    SVGBody += endDrawGraph(SVGId, width, height, yCounter, prevHeader, globalData[prevHeader]);
-
-
-    SVGHeader = '<?xml version="1.0"?>\n';
-    SVGHeader += '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ';
-    SVGHeader += '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n';
-    SVGHeader += '<svg xmlns="http://www.w3.org/2000/svg" ';
-    SVGHeader += 'width="' + (width + 20) + '" height="' + (yCounter + height + 60) + '"  viewPort="0 0 ' + width + ' ' + height + '">\n';
-    SVGBody =  SVGHeader + SVGBody + '\n</svg>';
     
     return SVGBody;
 }
 
 function workAgain(input) {
     var i, j, preOutput, preOutputSize, output = [], line, temp = [], header, headerAdd, headerTxt, b;
-    preOutput = input.split('\n');
-    preOutputSize = preOutput.length;
+    if (input.length > 0) {
+        preOutput = input.split('\n');
+        preOutputSize = preOutput.length;
 
-    i = 0;
-    header = '';
-    headerAdd  = 0;
-    headerTxt = '';
-    while (i < preOutputSize) {
-        line = preOutput.shift();
-        if (line.match(/^#/)) {
-            header = line;
-            if (!temp[header]) {
-                temp[header] = [];
-            }
-        }
-        if (!line.match(/LINUX-RESTART/)) {
-            temp[header].push(line);
-        }
-        i++;
-    }
-    
-    for (header in temp) {
-        if (header.match(/;[A-Z]+;/)) {
-            var header2, c, txt;
-            headerAdd = 3;
-            b = header.split(/;/);
-            txt = b[headerAdd];
-            b.splice(headerAdd, 1);
-            b[headerAdd - 1] += txt;
-            header2 = b.join(";");
-            for (j = 1; j < temp[header].length; j++) {
-                b = temp[header][j].split(/;/);
-                c = ':' + b[headerAdd];
-                b.splice(headerAdd, 1);
-                if (!temp[header2 + c]) {
-                    temp[header2 + c] = [];
+        i = 0;
+        header = '';
+        headerAdd  = 0;
+        headerTxt = '';
+        while (i < preOutputSize) {
+            line = preOutput.shift();
+            if (line.match(/^#/)) {
+                header = line;
+                if (!temp[header]) {
+                    temp[header] = [];
                 }
-                temp[header2 + c].push(b.join(";"));
             }
-            delete temp[header];
+            if (!line.match(/LINUX-RESTART/)) {
+                temp[header].push(line);
+            }
+            i++;
+        }
+
+        for (header in temp) {
+            if (header.match(/;[A-Z]+;/)) {
+                var header2, c, txt;
+                headerAdd = 3;
+                b = header.split(/;/);
+                txt = b[headerAdd];
+                b.splice(headerAdd, 1);
+                b[headerAdd - 1] += txt;
+                header2 = b.join(";");
+                for (j = 1; j < temp[header].length; j++) {
+                    b = temp[header][j].split(/;/);
+                    c = ':' + b[headerAdd];
+                    b.splice(headerAdd, 1);
+                    if (!temp[header2 + c]) {
+                        temp[header2 + c] = [];
+                    }
+                    temp[header2 + c].push(b.join(";"));
+                }
+                delete temp[header];
+            }
+        }
+
+        for (header in temp) {
+            temp[header].unshift(header);
+        }
+
+        for (i in temp) {
+            for (j = 0; j < temp[i].length; j++) {
+                output.push(temp[i][j]);
+            }
+            temp[i] = [];
         }
     }
-    
-    for (header in temp) {
-        temp[header].unshift(header);
-    }
-    
-    for (i in temp) {
-        for (j = 0; j < temp[i].length; j++) {
-            output.push(temp[i][j]);
-        }
-        temp[i] = [];
+    else {
+        output ='Empty data!';
     }
     return output;
 }
@@ -301,7 +319,7 @@ http.createServer(function (req, res) {
     commandObj.on('close', function (code) {
         if (code === 0) {
             res.writeHead(200, { 'Content-Type' : 'text/html;charset=utf-8'});
-            res.write(globalCall(workAgain(stdOut), 900, 300));
+            res.write(globalCall(workAgain(stdOut), 800, 300));
             res.end();
         }
         console.log('child process exited with code ' + code);
