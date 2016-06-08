@@ -58,5 +58,5 @@ Notes, warnings:
 ==========================
   * This service is not perfect, nor the code. Try it before deciding to use it.
   * When you open your svg file into Inkscape, consider selecting all and putting your stroke style width to 1 px.
-
+  * You should probably better wait for the sar2svg directly into sysstat - https://github.com/sysstat/sysstat/issues/51 - which development started in Feb, 2016.
 
