@@ -1,8 +1,9 @@
 # sar2svg
-Service to convert sar data into svg data viewable into web browser
+(Obsolete) service to convert sar data into svg data viewable into web browser.
+It was a kind of POC (done in 2015), and it is no more interesting, because sysstat now offers natively SVG output (and that's great) : take a look at https://github.com/sysstat/sysstat.
 
 
-This is a service tool to convert sar data (From System performance tools for the Linux operating system, see https://github.com/sysstat/sysstat) into SVG format viewable into web browser.
+This is a service tool to convert sar data (From System performance tools for the Linux operating system, ) into SVG format viewable into web browser.
 
 It is written in Javascript. It runs server-side (with NodeJS or io.js).
 
@@ -58,5 +59,5 @@ Notes, warnings:
 ==========================
   * This service is not perfect, nor the code. Try it before deciding to use it.
   * When you open your svg file into Inkscape, consider selecting all and putting your stroke style width to 1 px.
-  * You should probably better wait for the sar2svg directly into sysstat - https://github.com/sysstat/sysstat/issues/51 - which development started in Feb, 2016.
+  * You should use directly sysstat - https://github.com/sysstat/sysstat/issues/51 - which development started in Feb, 2016 and is now done.
 
